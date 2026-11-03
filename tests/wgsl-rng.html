@@ -1,0 +1,212 @@
+<!doctype html>
+<!-- Tests for public/demos/wgsl-rng. Serve the repo root and open /tests/wgsl-rng.html in a browser
+     with WebGPU; the result goes in the page and the title (PASS or FAIL). -->
+<meta charset="utf-8" />
+<title>running</title>
+<pre id="out"></pre>
+<script type="module">
+  import { getDevice } from "/web/gpu-rng/sim.js";
+  import { GENERATORS } from "/web/wgsl-rng/generators.js";
+  import { loadWgsl, makeSim, shaderCode } from "/web/wgsl-rng/sim.js";
+  import { WORKLOADS } from "/web/wgsl-rng/workloads.js";
+
+  const out = document.getElementById("out");
+  const results = [];
+  const check = (name, ok, detail = "") => {
+    results.push(ok);
+    out.textContent += `${ok ? "PASS" : "FAIL"} ${name} ${detail}\n`;
+  };
+  const hex = (words) => [...words].map((w) => w.toString(16).padStart(8, "0")).join(" ");
+  const expectHex = (name, got, want) => {
+    const g = hex(got);
+    check(name, g === want, g === want ? "" : `got ${g}, want ${want}`);
+  };
+
+  // Runs `body` (WGSL statements writing io[0..words)) in one thread, after the given files.
+  async function runOne(device, files, body, words) {
+    const sources = await Promise.all(["../gpu-rng/philox", "common", ...files].map(loadWgsl));
+    const code = sources.join("\n") + `
+      fn rand4u(call: u32) -> vec4u { return vec4u(0u); }
+      @group(0) @binding(0) var<storage, read_write> io: array<u32>;
+      @compute @workgroup_size(1)
+      fn main() { ${body} }`;
+    const module = device.createShaderModule({ code });
+    for (const m of (await module.getCompilationInfo()).messages) if (m.type === "error") throw new Error(m.message);
+    const buf = device.createBuffer({ size: words * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
+    const read = device.createBuffer({ size: words * 4, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    const pipeline = device.createComputePipeline({ layout: "auto", compute: { module, entryPoint: "main" } });
+    const encoder = device.createCommandEncoder();
+    const pass = encoder.beginComputePass();
+    pass.setPipeline(pipeline);
+    pass.setBindGroup(0, device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: buf } }] }));
+    pass.dispatchWorkgroups(1);
+    pass.end();
+    encoder.copyBufferToBuffer(buf, 0, read, 0, words * 4);
+    device.queue.submit([encoder.finish()]);
+    await read.mapAsync(GPUMapMode.READ);
+    return new Uint32Array(read.getMappedRange().slice(0));
+  }
+
+  async function readBuffer(device, buffer, bytes) {
+    const read = device.createBuffer({ size: bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    const encoder = device.createCommandEncoder();
+    encoder.copyBufferToBuffer(buffer, 0, read, 0, bytes);
+    device.queue.submit([encoder.finish()]);
+    await read.mapAsync(GPUMapMode.READ);
+    return read.getMappedRange().slice(0);
+  }
+
+  const u = (xs) => xs.map((x) => `${x >>> 0}u`).join(", ");
+
+  // Random123's known-answer vectors for Threefry4x32 (tests/kat_vectors): rounds, counter, key,
+  // output. They have 13 and 20 rounds, not 12; 12 runs the same code with one round fewer than 13.
+  const THREEFRY_KAT = [
+    [13, [0, 0, 0, 0], [0, 0, 0, 0], "531c7e4f 39491ee5 2c855a92 3d6abf9a"],
+    [13, [-1, -1, -1, -1], [-1, -1, -1, -1], "c4189358 1c9cc83a d5881c67 6a0a89e0"],
+    [13, [0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344], [0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89], "4aa71d8f 734738c2 431fc6a8 ae6debf1"],
+    [20, [0, 0, 0, 0], [0, 0, 0, 0], "9c6ca96a e17eae66 fc10ecd4 5256a7d8"],
+    [20, [-1, -1, -1, -1], [-1, -1, -1, -1], "2a881696 57012287 f6c7446e a16a6732"],
+    [20, [0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344], [0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89], "59cd1dbb b8879579 86b5d00c ac8b6d84"],
+  ];
+
+  async function knownAnswers(device) {
+    for (const [i, [rounds, ctr, key, want]] of THREEFRY_KAT.entries()) {
+      const got = await runOne(device, ["threefry"], `
+        let r = threefry4x32(vec4u(${u(ctr)}), vec4u(${u(key)}), ${rounds}u);
+        for (var j = 0u; j < 4u; j++) { io[j] = r[j]; }`, 4);
+      expectHex(`threefry-${rounds} KAT ${i % 3}`, got, want);
+    }
+    // The written-out versions agree with the loop.
+    for (const [i, [, ctr, key]] of THREEFRY_KAT.entries()) {
+      for (const n of [12, 20]) {
+        const got = await runOne(device, ["threefry"], `
+          let a = threefry4x32_${n}(vec4u(${u(ctr)}), vec4u(${u(key)}));
+          let b = threefry4x32(vec4u(${u(ctr)}), vec4u(${u(key)}), ${n}u);
+          for (var j = 0u; j < 4u; j++) { io[j] = a[j]; io[j + 4u] = b[j]; }`, 8);
+        expectHex(`threefry4x32_${n} matches the loop on KAT input ${i}`, got.subarray(0, 4), hex(got.subarray(4, 8)));
+      }
+    }
+    // The reference C code's outputs (xoshiro128starstar.c from prng.di.unimi.it, pcg_basic.c from
+    // pcg-c-basic, the JCGT supplement's pcg4d, xxhash32 and tea), compiled and run by the agent.
+    expectHex("xoshiro128** from s = 1, 2, 3, 4", await runOne(device, ["xoshiro-core"], `
+      var st = Xoshiro128(vec4u(1u, 2u, 3u, 4u));
+      for (var j = 0u; j < 6u; j++) { let s = xoshiro128ss(st); st = s.state; io[j] = s.out; }`, 6),
+      "00002d00 00000000 005a7080 04389d80 79199d9b 61963b24");
+    expectHex("pcg32 seed 42, sequence 54", await runOne(device, ["pcg32-core"], `
+      var rng = pcg32_seeded(vec2u(42u, 0u), vec2u(54u, 0u));
+      for (var j = 0u; j < 6u; j++) { let s = pcg32_next(rng); rng = s.rng; io[j] = s.out; }`, 6),
+      "a15c02b7 7b47f409 ba1d3330 83d2f293 bfa4784b cbed606e");
+    expectHex("pcg4d(1, 2, 3, 4)", await runOne(device, ["hashes"], `
+      let r = pcg4d(vec4u(1u, 2u, 3u, 4u));
+      for (var j = 0u; j < 4u; j++) { io[j] = r[j]; }`, 4), "3622cd16 f11471d8 e1109b3f 02b94c2f");
+    expectHex("xxhash32(1, 2, 3, 4)", await runOne(device, ["hashes"], `io[0] = xxhash32(vec4u(1u, 2u, 3u, 4u));`, 1), "a09feac4");
+    expectHex("tea, 6 cycles, (1, 2), key 0", await runOne(device, ["hashes"], `
+      let r = tea(vec2u(1u, 2u), vec4u(0u), 6u);
+      io[0] = r.x; io[1] = r.y;`, 2), "dbc04aac b1ac8365");
+  }
+
+  async function compilesAll(device) {
+    for (const [name, workload] of Object.entries(WORKLOADS)) {
+      for (const gen of GENERATORS) {
+        const module = device.createShaderModule({ code: await shaderCode(gen, workload) });
+        const errors = (await module.getCompilationInfo()).messages.filter((m) => m.type === "error");
+        check(`${name} with ${gen.id} compiles`, errors.length === 0, errors.map((m) => `${m.lineNum}: ${m.message}`).join("; "));
+      }
+    }
+  }
+
+  // Runs `steps` steps of a workload with a generator, then reads binding `binding`.
+  async function runWorkload(device, name, gen, steps, binding, bytes) {
+    const workload = WORKLOADS[name];
+    const buffers = workload.buffers(device);
+    // Readable copies: the workloads' buffers are STORAGE only, apart from the ones views read back.
+    const target = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+    buffers[binding].destroy();
+    buffers[binding] = target;
+    const sim = await makeSim({ device, workload, gen, buffers });
+    sim.step(steps);
+    const data = await readBuffer(device, target, bytes);
+    sim.destroy();
+    Object.values(buffers).forEach((b) => b.destroy());
+    return data;
+  }
+
+  // quality/stream.c's output (the C ports in quality/rngs.h): thread 0 in frame 0, and the last
+  // thread (2^20 - 1) in frame 1, so the statistical tests test what the shaders compute.
+  const C_PORTS = {
+    philox: ["e3e80670 e50a0ebc 95f222c0 b615aa27", "a90815b9 a5c75ada 1ec8eade 2b83ab56"],
+    threefry20: ["b8ed4609 11293615 20738f4f f7a0783a", "dd504eb0 1fe2470c 3d32a6fb 8ea94d8c"],
+    threefry12: ["0b292389 a5269211 c4142e7b 30fcd3be", "ac94a4a5 fe787cd1 c38ad3e3 c582c830"],
+    pcg4d: ["2eda6c9d 681d2eed 306c117d b0607dce", "f33a717a a96bb0ac 10337b41 cb47d712"],
+    xxhash32: ["dee6a671 9d5e993f d7a2b31c b1554b73", "150e2658 fd1ec004 6679e147 63075310"],
+    tea: ["dfdf8fb5 2d161390 7aa707fa 988a1ce2", "b9490185 166d29be 0ec300bc 40e0abd8"],
+    xorwow: ["6d9d654e fa277ff9 4b8f9eb6 4a8b818c", "c98e76a2 8b851eba 2390d1c6 c5751999"],
+    xoshiro: ["0895d9f5 8b2d7105 4ca13958 1419f8a5", "5184a41d d2d2fb83 53df6d70 b0e7694b"],
+    pcg32: ["e2393051 01112f35 d3509d35 0b932f4a", "5ecf2607 4da2c2da dc3ad1e1 fd21a0ed"],
+  };
+
+  async function matchesCPorts(device) {
+    const last = (1 << 20) - 1;
+    for (const gen of GENERATORS) {
+      const frame0 = new Uint32Array(await runWorkload(device, "raw", gen, 1, 1, (1 << 20) * 16));
+      const frame1 = new Uint32Array(await runWorkload(device, "raw", gen, 2, 1, (1 << 20) * 16));
+      expectHex(`${gen.id} frame 0, thread 0 matches the C port`, frame0.subarray(0, 4), C_PORTS[gen.id][0]);
+      expectHex(`${gen.id} frame 1, last thread matches the C port`, frame1.subarray(4 * last, 4 * last + 4), C_PORTS[gen.id][1]);
+    }
+  }
+
+  async function statistics(device) {
+    for (const gen of GENERATORS) {
+      // pi: 20 steps of 2^21 darts; the estimate's standard deviation is about 3e-4.
+      const hits = new Uint32Array(await runWorkload(device, "pi", gen, 20, 1, 16))[0];
+      const pi = (4 * hits) / (20 * 2 ** 21);
+      check(`${gen.id}: pi estimate`, Math.abs(pi - Math.PI) < 0.002, pi.toFixed(5));
+
+      // Every bit of the raw words is set about half the time: 2^22 words, sd 2.4e-4 per bit.
+      const words = new Uint32Array(await runWorkload(device, "raw", gen, 3, 1, (1 << 20) * 16));
+      const ones = new Float64Array(32);
+      for (const w of words) for (let b = 0; b < 32; b++) ones[b] += (w >>> b) & 1;
+      const worst = Math.max(...[...ones].map((n) => Math.abs(n / words.length - 0.5)));
+      check(`${gen.id}: raw bits balanced`, worst < 0.002, `worst bit off by ${worst.toExponential(1)}`);
+      check(`${gen.id}: threads differ`, words[0] !== words[4] || words[1] !== words[5]);
+
+      // Box-Muller: mean 0, variance 1 (plus the bins' width^2 / 12), over 2^24 samples.
+      const hist = new Uint32Array(await runWorkload(device, "gauss", gen, 4, 1, 128 * 4));
+      const w = 12 / 128;
+      let n = 0, s = 0, ss = 0;
+      hist.forEach((c, i) => { const x = -6 + (i + 0.5) * w; n += c; s += c * x; ss += c * x * x; });
+      const mean = s / n;
+      const variance = ss / n - mean * mean - (w * w) / 12;
+      check(`${gen.id}: gaussian mean and variance`, n === 4 * 2 ** 22 && Math.abs(mean) < 0.002 && Math.abs(variance - 1) < 0.003,
+        `n ${n}, mean ${mean.toExponential(1)}, variance ${variance.toFixed(4)}`);
+
+      // Dropout with p = 1/2 keeps about half of 2^22 elements (sd 2.4e-4); a kept one is doubled.
+      const output = new Float32Array(await runWorkload(device, "dropout", gen, 1, 2, 2048 * 2048 * 4));
+      let kept = 0;
+      for (const v of output) if (v !== 0) kept++;
+      check(`${gen.id}: dropout keeps half`, Math.abs(kept / output.length - 0.5) < 0.002, (kept / output.length).toFixed(5));
+
+      // Ising: 40 steps (20 sweeps) leave only spins 0 and 1, and both kinds.
+      const spins = new Uint32Array(await runWorkload(device, "ising", gen, 40, 1, 2048 * 2048 * 4));
+      let up = 0, bad = 0;
+      for (const v of spins) { if (v === 1) up++; else if (v !== 0) bad++; }
+      check(`${gen.id}: ising spins`, bad === 0 && up > 0 && up < spins.length, `${(up / spins.length).toFixed(3)} up`);
+    }
+  }
+
+  const device = await getDevice();
+  if (!device) {
+    check("WebGPU available", false);
+  } else {
+    device.addEventListener("uncapturederror", (e) => check("no WebGPU errors", false, e.error.message));
+    try {
+      await knownAnswers(device);
+      await compilesAll(device);
+      await matchesCPorts(device);
+      await statistics(device);
+    } catch (e) {
+      check("ran without throwing", false, String(e));
+    }
+  }
+  document.title = results.every(Boolean) ? "PASS" : "FAIL";
+</script>

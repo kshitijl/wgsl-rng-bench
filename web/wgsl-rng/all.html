@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WGSL RNGs, every workload</title>
+    <link rel="stylesheet" href="../gpu-rng/demo.css" />
+    <link rel="stylesheet" href="all.css" />
+  </head>
+  <body>
+    <div class="controls">
+      <label>results from <select id="source"></select></label>
+      <span class="buttons">
+        <input id="label" type="text" size="28" aria-label="name of this browser and machine" />
+        <button id="runall" type="button">run all benchmarks</button>
+        <button id="copy" type="button" hidden>copy results</button>
+      </span>
+    </div>
+    <p id="progress" class="progress" hidden></p>
+    <textarea id="json" class="json" rows="6" hidden></textarea>
+    <div class="gens" id="workloads"></div>
+    <div id="all"></div>
+    <div class="gens" id="gens"></div>
+    <details class="table-view">
+      <summary>table</summary>
+      <table id="table"></table>
+    </details>
+    <script type="module" src="all.js"></script>
+  </body>
+</html>

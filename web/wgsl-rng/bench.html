@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WGSL random number generators</title>
+    <link rel="stylesheet" href="../gpu-rng/demo.css" />
+    <link rel="stylesheet" href="bench.css" />
+  </head>
+  <body>
+    <div class="controls">
+      <label>RNG <select id="gen"></select></label>
+      <span class="buttons">
+        <button id="start" type="button">start</button>
+        <button id="stop" type="button" hidden>stop</button>
+        <button id="bench" type="button">benchmark RNGs</button>
+      </span>
+    </div>
+    <div class="bench">
+      <p class="status" hidden>benchmarking! pretty pictures soon</p>
+      <section id="picture">
+        <canvas></canvas>
+        <dl></dl>
+      </section>
+      <div id="bars"></div>
+    </div>
+    <p class="missing">This needs a browser with WebGPU.</p>
+    <script type="module" src="bench.js"></script>
+  </body>
+</html>

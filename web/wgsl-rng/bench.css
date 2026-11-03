@@ -1,0 +1,27 @@
+/* The benchmark page: ../gpu-rng/demo.css, plus the picture beside the bars. */
+:root { --c0: #2a78d6; --c1: #eb6834; }
+.bench { position: relative; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 20px; align-items: start; }
+/* Narrow (the article column): the stats beside a smaller picture, the bars below. */
+@media (max-width: 760px) {
+  .bench { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  #picture { display: grid; grid-template-columns: minmax(0, 300px) auto; gap: 0 16px; align-items: start; }
+  #picture dl { margin-top: 0; }
+}
+@media (max-width: 440px) { #picture { grid-template-columns: minmax(0, 1fr); } #picture dl { margin-top: 6px; } }
+#bars { position: relative; }
+#bars svg { display: block; overflow: visible; }
+#bars .grid { stroke: var(--grid); stroke-width: 1; }
+#bars .tick { fill: var(--quiet); font-size: 11px; font-variant-numeric: tabular-nums; }
+#bars .name { fill: var(--ink); font-size: 13px; }
+#bars .value { fill: var(--quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
+#bars .hit { fill: transparent; }
+#bars .row:hover .hit { fill: #f0f0ea; }
+#bars .bar.c0 { fill: var(--c0); }
+#bars .bar.c1 { fill: var(--c1); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.swatch.c0 { background: var(--c0); }
+.swatch.c1 { background: var(--c1); }
+.tip-name { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.tip .quiet { color: var(--quiet); }
+.status { top: 30%; }
+.no-webgpu .bench { display: none; }
