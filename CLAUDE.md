@@ -85,4 +85,10 @@ for bit (checked Nov 3: all nine, frames 0 and 1, threads 0-3 and the last, thro
 kernel). Why C (the user asked): TestU01 and PractRand pull numbers on the CPU, BigCrush needs
 about 2^38 and PractRand up to 1 TB, and the ports compute exactly what the shaders do.
 
-Results so far are in `quality/results/` and `quality/README.md`.
+Results so far are in `quality/results/` and `quality/README.md`. The runs started Nov 3, 17:25
+by `run-all.sh` are detached (`nohup`, parented to launchd, not to any Claude session): they
+survive the session and the terminal closing, pause during sleep, and die on logout or reboot.
+Nothing collects them: a later session runs `quality/status.sh`, and once everything has
+finished, summarizes the results in `quality/README.md` and commits `results/`. The
+one-thread PractRand runs and the bench's Safari run were done by hand (see `quality/README.md`
+and above). The BigCrush files fill in 4 KB chunks (buffered); the summary is at the end.
