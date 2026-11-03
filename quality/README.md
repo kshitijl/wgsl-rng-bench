@@ -20,4 +20,15 @@ four words, thread 0 first (2^20 threads, seed 1). See `rngs.h`.
 
 ## Results
 
-(Filled in as the runs finish.)
+Started Nov 3, 2026 at 17:25 with `run-all.sh`, plus one-thread PractRand runs (to 64 GB) of the
+three that failed early; output lands in `results/`, committed once the runs finish.
+
+Interim (Nov 3, 18:00), PractRand, the benchmark's layout (2^20 threads):
+- pcg4d fails at 128 MB, the first checkpoint, by huge margins (p = 0 on several tests); a single
+  thread's own sequence (thread, n, seed, 0 with n climbing) fails at 128 MB too.
+- PCG32 fails at 128 MB; one thread's stream is clean to 32 GB, so the failure is between
+  streams: `pcg32_srandom_r(seed, thread)` gives every thread the same starting state and
+  consecutive increments.
+- xxhash32 fails at 1 GB (FPF, p about 1e-22), on one thread as well.
+- Philox, both Threefrys, TEA-6, XORWOW and xoshiro128**: no anomalies at 32 GB.
+- SmallCrush (same layout): PCG32 fails 6 statistics; XORWOW gave one marginal p = 8.2e-4 (of 15).
