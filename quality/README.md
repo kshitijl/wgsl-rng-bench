@@ -95,3 +95,8 @@ Where the time goes (Philox's log): tests 5 and 6, `smarsa_CollisionOver` with t
 took about 1.7 hours together. So progress by test count says little about time left: on Nov 4
 the agent extrapolated from "6-10 of 106 tests done" to "days", when the runs were in fact about
 80% through by CPU time.
+
+Nov 4, about 14:05: the user asked to unpause three of the five. Resumed with `kill -CONT`:
+Threefry-12 (8231), TEA-6 (8243) and PCG32 hashed (23070), the three that passed PractRand, so
+their BigCrush result is still open. pcg4d (8235) and xxhash32 (8239) stay paused; both already
+fail PractRand, and xxhash32 fails BigCrush.
