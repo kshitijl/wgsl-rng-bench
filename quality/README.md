@@ -100,3 +100,6 @@ Nov 4, about 14:05: the user asked to unpause three of the five. Resumed with `k
 Threefry-12 (8231), TEA-6 (8243) and PCG32 hashed (23070), the three that passed PractRand, so
 their BigCrush result is still open. pcg4d (8235) and xxhash32 (8239) stay paused; both already
 fail PractRand, and xxhash32 fails BigCrush.
+
+Nov 4: TEA-6 (finished 15:36, 8:22:26 CPU) and PCG32 with hashed seeding (15:18, 7:38:47 CPU)
+pass all of BigCrush, 160 statistics each ("All tests were passed").
