@@ -103,3 +103,5 @@ fail PractRand, and xxhash32 fails BigCrush.
 
 Nov 4: TEA-6 (finished 15:36, 8:22:26 CPU) and PCG32 with hashed seeding (15:18, 7:38:47 CPU)
 pass all of BigCrush, 160 statistics each ("All tests were passed").
+
+Nov 4, about 15:50: the user asked to unpause pcg4d (8235) and xxhash32 (8239); resumed with `kill -CONT`. Nothing is paused now.
