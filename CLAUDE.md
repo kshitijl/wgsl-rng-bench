@@ -78,8 +78,8 @@ Measured Nov 3 on the user's MacBook Pro (M1 Pro), test suites paused: two runs 
 percent (up to about 10% in the worst cells); Firefox is slower than Chrome, Philox most (pi:
 3.5K vs 5.9K steps/s). An earlier 1.7x swing between runs came from measuring on a busy machine.
 Safari 26 couldn't run while the screen was locked (it freezes the page); it needs a run with the
-user there. An iPhone 15 (Safari 27.0.1, the user's, Nov 3) ran two runs of `all.html?autorun=1` served from
-the laptop: `tools/collect.py web DIR` on port 4345 behind `tailscale serve --bg 4345`, since
+user there. An iPhone 15 (Safari 27.0.1, the user's, Nov 3) ran `all.html?autorun=1` twice,
+served from the laptop: `tools/collect.py web DIR` on port 4345 behind `tailscale serve --bg 4345`, since
 WebGPU needs HTTPS (a plain `http://100.x` address has no `navigator.gpu`). It saves the run to
 DIR. The two runs agree within a few percent (xoshiro 1.53 vs 1.61, the most). Against
 Threefry-12 its ranking matches the Mac's (run 1, geometric mean over workloads: pcg4d
