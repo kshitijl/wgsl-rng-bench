@@ -70,3 +70,15 @@ runs and were left alone; rebuild them once those finish): `results/bigcrush-pcg
 The first runs' PCG32 outputs, of the old seeding, are `bigcrush-pcg32-srandom.txt` (stopped by
 the user partway, Nov 3: its result no longer mattered), `practrand-pcg32-srandom.txt` and
 `practrand-pcg32-srandom-1thread.txt`.
+
+## BigCrush runs paused (Nov 4)
+
+At about 10:45 on Nov 4 the user asked to pause all but four BigCrush runs: they had reached
+only 3-10 of 106 tests in 17 hours, sharing the CPU nine ways at nice 19 (about 41% of a core
+each). Still running: Philox (pid 8225), Threefry-20 (8227), XORWOW (8246), xoshiro128** (8248),
+now at 100% of a core each. Paused with `kill -STOP` (state `T` in `ps`; resume with
+`kill -CONT PID`): Threefry-12 (8231), pcg4d (8235), xxhash32 (8239), TEA-6 (8243) and PCG32
+hashed (23070, the `crush-new` binary). pcg4d and xxhash32 already fail PractRand, and xxhash32
+fails BigCrush too, so those two runs matter least. A paused run's log stops growing; it isn't
+hung. The `caffeinate` started on Nov 3 keeps the laptop awake while any `crush ... big` process
+exists, paused ones included.
