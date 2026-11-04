@@ -32,3 +32,21 @@ Interim (Nov 3, 18:00), PractRand, the benchmark's layout (2^20 threads):
 - xxhash32 fails at 1 GB (FPF, p about 1e-22), on one thread as well.
 - Philox, both Threefrys, TEA-6, XORWOW and xoshiro128**: no anomalies at 32 GB.
 - SmallCrush (same layout): PCG32 fails 6 statistics; XORWOW gave one marginal p = 8.2e-4 (of 15).
+
+## PCG32's seeding (Nov 3)
+
+The user asked whether PCG32 can be used more correctly than the benchmark's
+`pcg32_srandom_r(seed, thread)`, which gives every thread the same start and increments 1, 3, 5, ...
+`pcgseed.c` (`cc -O3 -I. -o pcgseed pcgseed.c`, `./pcgseed VARIANT | RNG_test stdin32`) tries
+five seedings in the benchmark's layout (2^20 threads, four words each per frame), PractRand to
+8 GB, run Nov 3 while the full runs were going:
+
+- `current`, the benchmark's: fails at 64 MB.
+- `skip`, one shared stream with thread t jumped ahead t * 2^44 (like cuRAND's subsequences):
+  fails at 64 MB (FPF, p = 4e-457 by 8 GB). A full-period LCG mod 2^64's low k bits have period
+  2^k, so every thread's state has the same low 44 bits at every step.
+- `hashstate` (start = Philox hash of the thread, increments 2t+1), `hashboth` (start and
+  increment both hashed) and `onestream` (hashed starts, one shared increment): no anomalies at 8 GB.
+
+So hashing each thread's start fixes it, as XORWOW and xoshiro128** already do with Philox. It
+changes only the init pass, not the per-step cost. The benchmark still uses `current`.
