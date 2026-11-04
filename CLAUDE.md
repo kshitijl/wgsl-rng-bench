@@ -5,7 +5,9 @@ benchmarked on seven workloads in the browser, and tested for statistical qualit
 and PractRand. Split out of the klauria.tech repo (`~/local-src/39-klauria-tech`) the same day
 (the user: "this whole benchmarking project, along with the statistical testing, as well as the
 C implementations that go with, should be in its own repo ... so it can be a separate github
-repo and not clutter the website repo"). The site's project page ("A benchmark of WGSL RNGs",
+repo and not clutter the website repo"). Public on GitHub since Nov 3: https://github.com/kshitijl/wgsl-rng-bench
+(the README is only a link to the post, the user's call). The repo is public, so commits
+carry no local paths (the history was rewritten once before the first push to remove one). The site's project page ("A benchmark of WGSL RNGs",
 `src/content/pieces/wgsl-rng-benchmark.mdx` there) frames these pages; its prose is the user's.
 
 In files the agent writes, the user is "the user" and the agent "the agent". The user writes all
