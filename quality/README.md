@@ -26,7 +26,8 @@ three that failed early; output lands in `results/`, committed once the runs fin
 Interim (Nov 3, 18:00), PractRand, the benchmark's layout (2^20 threads):
 - pcg4d fails at 128 MB, the first checkpoint, by huge margins (p = 0 on several tests); a single
   thread's own sequence (thread, n, seed, 0 with n climbing) fails at 128 MB too.
-- PCG32 fails at 128 MB; one thread's stream is clean to 32 GB, so the failure is between
+- PCG32 as first seeded (`pcg32_srandom_r(seed, thread)`; its files are to be renamed `*-pcg32-srandom*`, see
+  the next section) fails at 128 MB; one thread's stream is clean to 32 GB, so the failure is between
   streams: `pcg32_srandom_r(seed, thread)` gives every thread the same starting state and
   consecutive increments.
 - xxhash32 fails at 1 GB (FPF, p about 1e-22), on one thread as well.
@@ -49,4 +50,14 @@ five seedings in the benchmark's layout (2^20 threads, four words each per frame
   increment both hashed) and `onestream` (hashed starts, one shared increment): no anomalies at 8 GB.
 
 So hashing each thread's start fixes it, as XORWOW and xoshiro128** already do with Philox. It
-changes only the init pass, not the per-step cost. The benchmark still uses `current`.
+changes only the init pass, not the per-step cost. The benchmark has used `hashstate` since
+Nov 3 (the user: yes to switching), in `gen-pcg32.wgsl` and `rngs.h`, checked against the GPU
+by `tests/wgsl-rng.html` (PASS).
+
+Its full runs started Nov 3 about 19:40, detached like the others, from binaries built in a
+session's scratch folder (the repo's `quality/crush` and `stream` were still in use by the first
+runs and were left alone; rebuild them once those finish): `results/bigcrush-pcg32-hashed.txt`,
+`practrand-pcg32-hashed.txt` (to 1 TB) and `practrand-pcg32-hashed-1thread.txt` (to 64 GB).
+The first runs' PCG32 outputs, `bigcrush-pcg32.txt`, `practrand-pcg32.txt` and
+`practrand-pcg32-1thread.txt`, are the old seeding; rename them `*-pcg32-srandom*` once the
+BigCrush one finishes or is stopped (it was still running; the agent wasn't allowed to stop it).

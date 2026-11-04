@@ -36,7 +36,10 @@ the JCGT supplement); stateful: XORWOW, xoshiro128** and PCG32 (64-bit arithmeti
 `vec2u`). Every generator defines `rng_begin`, `rand4u(call)` and `rng_end` (`common.wgsl` has the
 contract); a stateful one also its states at binding 9 and an `init` pass. Counter-based ones
 hash (thread, frame) as each `gen-*.wgsl` says; stateful ones seed per thread (XORWOW and
-xoshiro128** from a Philox hash of the thread, PCG32 as `pcg32_srandom_r(seed, thread)`).
+xoshiro128** from a Philox hash of the thread, PCG32 as `pcg32_srandom_r(h, thread)` with h a
+Philox hash of the thread; the user, Nov 3, after `pcg32_srandom_r(seed, thread)` failed
+PractRand at 64 MB from correlation between threads: see `quality/README.md`). Seeding is only
+the init pass, so `results.json`'s PCG32 speeds, measured with the old seeding, still stand.
 
 Seven workloads (`workloads.js`), one page each, `bench.html?w=<workload>`: pi, ink and the path
 tracer reuse the post's kernels and views (`../gpu-rng/pi.js` and `ink.js` export `piDemo` and

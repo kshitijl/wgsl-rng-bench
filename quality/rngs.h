@@ -132,7 +132,7 @@ static inline void stream_init(Stream *s, int gen, u32 threads) {
   s->gen = gen; s->threads = threads; s->frame = 0; s->states = NULL;
   if (gen == XORWOW) { Xorwow *x = malloc(sizeof *x * threads); for (u32 t = 0; t < threads; t++) x[t] = xorwow_seeded(t, SEED); s->states = x; }
   if (gen == XOSHIRO) { Xoshiro *x = malloc(sizeof *x * threads); for (u32 t = 0; t < threads; t++) x[t] = xoshiro_seeded(t, SEED); s->states = x; }
-  if (gen == PCG32) { Pcg32 *x = malloc(sizeof *x * threads); for (u32 t = 0; t < threads; t++) x[t] = pcg32_seeded(SEED, t); s->states = x; }
+  if (gen == PCG32) { Pcg32 *x = malloc(sizeof *x * threads); for (u32 t = 0; t < threads; t++) { u32 c[4] = {t, 0, 0, 0}, k[2] = {SEED, 0x9C632u}, h[4]; philox(c, k, h); x[t] = pcg32_seeded(h[0] | (u64)h[1] << 32, t); } s->states = x; }
 }
 
 // Thread t's rand4u in the current frame.
