@@ -82,3 +82,16 @@ hashed (23070, the `crush-new` binary). pcg4d and xxhash32 already fail PractRan
 fails BigCrush too, so those two runs matter least. A paused run's log stops growing; it isn't
 hung. The `caffeinate` started on Nov 3 keeps the laptop awake while any `crush ... big` process
 exists, paused ones included.
+
+## BigCrush results, first four (Nov 4)
+
+Finished Nov 4 between 12:15 and 13:27, about 2 hours after the other five were paused:
+Philox, Threefry-20, XORWOW and xoshiro128** pass all of BigCrush (160 statistics each; TestU01's
+summary: "All tests were passed"). Total CPU time: Philox 8:13:53, Threefry-20 9:21:16, XORWOW
+8:16:14, xoshiro128** 8:11:28.
+
+Where the time goes (Philox's log): tests 5 and 6, `smarsa_CollisionOver` with t = 3 on
+16384^3 cells, took 2:28:47 and 4:02:57, about 6.5 of the 8.2 CPU-hours. The other 104 tests
+took about 1.7 hours together. So progress by test count says little about time left: on Nov 4
+the agent extrapolated from "6-10 of 106 tests done" to "days", when the runs were in fact about
+80% through by CPU time.
