@@ -34,6 +34,15 @@ Interim (Nov 3, 18:00), PractRand, the benchmark's layout (2^20 threads):
 - Philox, both Threefrys, TEA-6, XORWOW and xoshiro128**: no anomalies at 32 GB.
 - SmallCrush (same layout): PCG32 fails 6 statistics; XORWOW gave one marginal p = 8.2e-4 (of 15).
 
+Interim (Nov 3, 20:50):
+- PractRand: Philox, both Threefrys, TEA-6, XORWOW and xoshiro128** have no failures at 256 GB
+  (each has at most two "unusual" lines over the run, p no smaller than 7e-6; with hundreds of
+  tests per checkpoint, some are expected). PCG32 with hashed seeding: no failures at 128 GB, and
+  one thread's stream clean to 64 GB (done).
+- BigCrush: xxhash32 fails the first two tests (smultin_MultinomialOver on byte triples, from
+  the top byte and from bits 22-29), p < 1e-300 each. Every other generator's visible p-values are
+  ordinary. TestU01 writes in 4 KB chunks, so only the first 3-6 tests of each run are visible yet.
+
 ## PCG32's seeding (Nov 3)
 
 The user asked whether PCG32 can be used more correctly than the benchmark's
