@@ -1,5 +1,6 @@
 // Every generator on every workload, from results.json: a column per workload, steps per second
-// up the side on a log scale (higher is faster), and a line per generator, named at both ends.
+// up the side on a log scale (higher is faster), and a line per generator, named at its right end
+// (on a chart under LABELS_MIN wide, not named: the buttons below say which line is which).
 // Each generator has its own color; stateful ones are dashed, counter-based solid (nine
 // generators, eight colors: one color is used twice, once solid and once dashed). Hovering a line
 // or a generator's button picks it out, with its numbers; clicking keeps it picked. Picking a
@@ -27,7 +28,8 @@ const COLORS = {
   philox: "#008300", xoshiro: "#6250d6", pcg32: "#e34948", xorwow: "#eb6834",
 };
 const SVG = "http://www.w3.org/2000/svg";
-const M = { top: 16, right: 118, bottom: 34, left: 118 };
+const LABELS_MIN = 480; // px; a narrower chart has no line names (the user, Nov 3: "in mobile no labels")
+const margins = (labels) => ({ top: 16, right: labels ? 118 : 14, bottom: 34, left: 14 });
 const HEIGHT = 420;
 const LABEL_GAP = 14; // least vertical distance between two end labels
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
@@ -83,6 +85,8 @@ function spread(ys, top, bottom) {
 
 function drawLines() {
   const width = chart.clientWidth || 700;
+  const labels = width >= LABELS_MIN;
+  const M = margins(labels);
   const svg = el("svg", { width, height: HEIGHT, viewBox: `0 0 ${width} ${HEIGHT}`, role: "img" });
   chart.append(svg);
   el("title", {}, svg).textContent = "Steps per second of each generator on each workload";
@@ -111,7 +115,6 @@ function drawLines() {
 
   const focus = pinned ?? hovered;
   chart.classList.toggle("focused", focus !== null);
-  const first = spread(GENERATORS.map((g) => Y(speed(workloads[0], g.id))), M.top, bottom);
   const last = spread(GENERATORS.map((g) => Y(speed(workloads.at(-1), g.id))), M.top, bottom);
   // The picked generator is drawn last, on top.
   const order = [...GENERATORS.keys()].sort((a, b) => (GENERATORS[a].id === focus) - (GENERATORS[b].id === focus));
@@ -124,14 +127,11 @@ function drawLines() {
     const d = points.map(([x, y]) => `${x},${y}`).join(" ");
     el("polyline", { class: `line ${gen.family}`, points: d, stroke: color }, g);
     for (const [x, y] of points) el("circle", { class: "dot", cx: x, cy: y, r: on ? 4.5 : 3.5, fill: color }, g);
-    // Names at both ends, with a short leader where the label had to move.
-    const ends = [
-      { x: points[0][0], y: points[0][1], ly: first[k], anchor: "end", dx: -10 },
-      { x: points.at(-1)[0], y: points.at(-1)[1], ly: last[k], anchor: "start", dx: 10 },
-    ];
-    for (const e of ends) {
-      el("line", { class: "lead", x1: e.x + Math.sign(e.dx) * 4, y1: e.y, x2: e.x + e.dx * 0.8, y2: e.ly, stroke: color }, g);
-      el("text", { class: "end", x: e.x + e.dx, y: e.ly, "text-anchor": e.anchor, "dominant-baseline": "middle", fill: "var(--ink)" }, g).textContent = gen.name;
+    // The name at the right end, with a short leader where the label had to move.
+    if (labels) {
+      const [x, y] = points.at(-1);
+      el("line", { class: "lead", x1: x + 4, y1: y, x2: x + 8, y2: last[k], stroke: color }, g);
+      el("text", { class: "end", x: x + 10, y: last[k], "text-anchor": "start", "dominant-baseline": "middle", fill: "var(--ink)" }, g).textContent = gen.name;
     }
     if (on) {
       workloads.forEach((w, i) => { el("text", { class: "value", x: points[i][0] + 6, y: points[i][1] - 8 }, g).textContent = compact.format(speed(w, gen.id)); });

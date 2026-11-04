@@ -63,7 +63,8 @@ picture gets twice the GPU time per frame (`sliceMs`; the user: "more steps per 
 `all.html` charts every generator on every workload from `results.json`: a column per workload,
 steps per second up the side on a log scale (the user: "higher = faster", plain steps per
 second), a line per generator in its own color (stateful dashed; eight palette colors, so orange
-is used twice, once solid and once dashed), named at both ends; hover or click a generator to
+is used twice, once solid and once dashed), named at the right end (the user, Nov 3: "not on both sides"; under 480 px wide,
+as in a phone's frame, not named at all, the buttons below being the legend); hover or click a generator to
 pick it out; a row of workload buttons (or a column's name) shows one workload as ranked bars,
 stateful bars striped (the user: to "see relative ordering for trace or ising"); a table view.
 
