@@ -26,7 +26,7 @@ three that failed early; output lands in `results/`, committed once the runs fin
 Interim (Nov 3, 18:00), PractRand, the benchmark's layout (2^20 threads):
 - pcg4d fails at 128 MB, the first checkpoint, by huge margins (p = 0 on several tests); a single
   thread's own sequence (thread, n, seed, 0 with n climbing) fails at 128 MB too.
-- PCG32 as first seeded (`pcg32_srandom_r(seed, thread)`; its files are to be renamed `*-pcg32-srandom*`, see
+- PCG32 as first seeded (`pcg32_srandom_r(seed, thread)`; its files are `*-pcg32-srandom*`, see
   the next section) fails at 128 MB; one thread's stream is clean to 32 GB, so the failure is between
   streams: `pcg32_srandom_r(seed, thread)` gives every thread the same starting state and
   consecutive increments.
@@ -58,6 +58,6 @@ Its full runs started Nov 3 about 19:40, detached like the others, from binaries
 session's scratch folder (the repo's `quality/crush` and `stream` were still in use by the first
 runs and were left alone; rebuild them once those finish): `results/bigcrush-pcg32-hashed.txt`,
 `practrand-pcg32-hashed.txt` (to 1 TB) and `practrand-pcg32-hashed-1thread.txt` (to 64 GB).
-The first runs' PCG32 outputs, `bigcrush-pcg32.txt`, `practrand-pcg32.txt` and
-`practrand-pcg32-1thread.txt`, are the old seeding; rename them `*-pcg32-srandom*` once the
-BigCrush one finishes or is stopped (it was still running; the agent wasn't allowed to stop it).
+The first runs' PCG32 outputs, of the old seeding, are `bigcrush-pcg32-srandom.txt` (stopped by
+the user partway, Nov 3: its result no longer mattered), `practrand-pcg32-srandom.txt` and
+`practrand-pcg32-srandom-1thread.txt`.
