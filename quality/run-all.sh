@@ -4,7 +4,7 @@
 cd "$(dirname "$0")"
 mkdir -p results
 RNG_TEST=${RNG_TEST:?set RNG_TEST to the path of PractRand RNG_test}
-for g in philox threefry20 threefry12 pcg4d xxhash32 tea xorwow xoshiro pcg32; do
+for g in philox threefry20 threefry12 threefry10 pcg4d xxhash32 tea xorwow xoshiro pcg32; do
   nice -n 19 ./crush $g big > results/bigcrush-$g.txt 2>&1 &
   (./stream $g | nice -n 19 "$RNG_TEST" stdin32 -tlmax 1TB > results/practrand-$g.txt 2>&1) &
 done

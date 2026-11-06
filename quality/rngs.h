@@ -1,4 +1,4 @@
-// C ports of the nine WGSL generators in klauria.tech's public/demos/wgsl-rng (and
+// C ports of the ten WGSL generators in klauria.tech's public/demos/wgsl-rng (and
 // ../gpu-rng/philox.wgsl, xorwow-core.wgsl), word for word, laid out as the benchmark uses them:
 // thread t of T, frame n, seed SEED, one rand4u per thread per frame (CALLS = 1). A "frame" of
 // output is all T threads' four words, thread 0 first: frame_words(g, n) fills 4T words.
@@ -110,8 +110,8 @@ static inline Pcg32 pcg32_seeded(u64 initstate, u64 initseq) {
   return r;
 }
 
-enum { PHILOX, THREEFRY20, THREEFRY12, PCG4D, XXHASH32, TEA, XORWOW, XOSHIRO, PCG32, NGEN };
-static const char *GEN_IDS[NGEN] = {"philox", "threefry20", "threefry12", "pcg4d", "xxhash32", "tea", "xorwow", "xoshiro", "pcg32"};
+enum { PHILOX, THREEFRY20, THREEFRY12, THREEFRY10, PCG4D, XXHASH32, TEA, XORWOW, XOSHIRO, PCG32, NGEN };
+static const char *GEN_IDS[NGEN] = {"philox", "threefry20", "threefry12", "threefry10", "pcg4d", "xxhash32", "tea", "xorwow", "xoshiro", "pcg32"};
 
 typedef struct {
   int gen;
@@ -140,7 +140,11 @@ static inline void rand4u(Stream *s, u32 t, u32 out[4]) {
   u32 n = s->frame;
   switch (s->gen) {
     case PHILOX: { u32 c[4] = {n, 0, t, 0}, k[2] = {SEED, 0}; philox(c, k, out); break; }
-    case THREEFRY20: case THREEFRY12: { u32 c[4] = {n, 0, t, 0}, k[4] = {SEED, 0, 0, 0}; threefry(c, k, s->gen == THREEFRY20 ? 20 : 12, out); break; }
+    case THREEFRY20: case THREEFRY12: case THREEFRY10: {
+      u32 c[4] = {n, 0, t, 0}, k[4] = {SEED, 0, 0, 0};
+      threefry(c, k, s->gen == THREEFRY20 ? 20 : s->gen == THREEFRY12 ? 12 : 10, out);
+      break;
+    }
     case PCG4D: { u32 in[4] = {t, n, SEED, 0}; pcg4d(in, out); break; }
     case XXHASH32: for (u32 j = 0; j < 4; j++) out[j] = xxhash32(t, n, SEED, j); break;
     case TEA: { u32 k[4] = {SEED, 0, 0, 0}; tea(t, 2 * n, k, 6, out); tea(t, 2 * n + 1, k, 6, out + 2); break; }

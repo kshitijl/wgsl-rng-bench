@@ -1,4 +1,4 @@
-# Statistical tests of the nine generators
+# Statistical tests of the generators
 
 Build (macOS, Nov 3, 2026):
 
@@ -10,7 +10,7 @@ Build (macOS, Nov 3, 2026):
 - Here: `cc -O3 -march=native -o stream stream.c` and
   `cc -O3 -march=native -w -I$TU/include crush.c -o crush $TU/lib/libtestu01.a $TU/lib/libprobdist.a $TU/lib/libmylib.a -lm`.
 
-Run: `RNG_TEST=/path/to/RNG_test ./run-all.sh` (BigCrush and PractRand to 1 TB on all nine, in
+Run: `RNG_TEST=/path/to/RNG_test ./run-all.sh` (BigCrush and PractRand to 1 TB on every generator, in
 parallel, at low priority). One stream by hand: `./stream GEN | RNG_test stdin32 -tlmax 1TB`;
 `./stream GEN 1` is one thread's own sequence; `./stream GEN 1048576 --dump` prints words to
 compare with the GPU.
@@ -105,3 +105,27 @@ Nov 4: TEA-6 (finished 15:36, 8:22:26 CPU) and PCG32 with hashed seeding (15:18,
 pass all of BigCrush, 160 statistics each ("All tests were passed").
 
 Nov 4, about 15:50: the user asked to unpause pcg4d (8235) and xxhash32 (8239); resumed with `kill -CONT`. Nothing is paused now.
+
+Threefry-12 finished Nov 4 at 16:04 (8:52:04 CPU): it passes BigCrush. One of its 160 statistics,
+test 49 (MaxOft AD, t = 32), is just outside TestU01's [0.001, 0.999] band at p = 7.9e-4. With 160
+statistics there's a 27% chance (1 - 0.998^160) that at least one lands outside the band, and
+7.9e-4 is far from a clear failure (p < 1e-10 or so), so this isn't one.
+
+The pcg4d and xxhash32 runs died after the Nov 4 unpause, when an unrelated process ran the
+laptop out of memory. Their logs stop at 25 of 106 tests. TestU01 can't resume a run, so both
+restarted from the beginning on Nov 6 at 01:45, with the same `crush` binary and nice 19, each
+under its own `caffeinate -i -w PID`. Both finished Nov 6 at 03:16 (about 1:32 CPU each) and fail
+BigCrush, as their PractRand runs did: pcg4d 9 of 160 statistics outside the band (5 at eps),
+xxhash32 10 (6 at eps or 1 - eps1).
+
+## Threefry-10 (Nov 6)
+
+The user asked, Nov 6, whether Threefry-10 had been tried (it hadn't; only 12 and 20), then to add
+it and run its tests. Threefry-12 is the fewest rounds the GPU benchmark uses. Threefry-10 is the
+same function with two rounds fewer, so it should show whether 12 rounds leave much margin.
+`rngs.h` and `run-all.sh` have it as `threefry10`, laid out like Threefry-12: counter (frame, 0,
+thread, 0), key (seed, 0, 0, 0). `stream` is rebuilt with it, and Threefry-12's first words are
+unchanged (`0b292389 a5269211 c4142e7b 30fcd3be`, as in `tests/wgsl-rng.html`). `crush` isn't
+rebuilt yet: two runs were using it, and the TestU01 and PractRand builds of Nov 3 are gone (they
+were in a session's scratch folder). The WGSL benchmark doesn't have it: `results.json` has no
+speeds for it, so the summary chart would break if it were added to `generators.js`.
