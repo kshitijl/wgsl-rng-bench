@@ -1,8 +1,8 @@
 // Every generator on every workload, from results.json: a column per workload, steps per second
 // up the side on a log scale (higher is faster), and a line per generator, named at its right end
 // (on a chart under LABELS_MIN wide, not named: the buttons below say which line is which).
-// Each generator has its own color; stateful ones are dashed, counter-based solid (nine
-// generators, eight colors: one color is used twice, once solid and once dashed). Hovering a line
+// Each generator has its own color; stateful ones are dashed, counter-based solid (ten
+// generators, eight colors: two colors are used twice, each once solid and once dashed). Hovering a line
 // or a generator's button picks it out, with its numbers; clicking keeps it picked. Picking a
 // workload (its button, or its name under the chart) shows just that one, as bars ranked
 // fastest first; stateful bars are striped.
@@ -25,7 +25,7 @@ const SHORT_NAMES = { pi: "pi", ink: "ink", trace: "trace", ising: "Ising", drop
 // The reference categorical palette (dataviz skill), in its order, fastest overall first.
 const COLORS = {
   pcg4d: "#2a78d6", threefry12: "#eb6834", xxhash32: "#1baf7a", threefry20: "#eda100", tea: "#e87ba4",
-  philox: "#008300", xoshiro: "#6250d6", pcg32: "#e34948", xorwow: "#eb6834",
+  philox: "#008300", xoshiro: "#6250d6", pcg32: "#e34948", xorwow: "#eb6834", threefry10: "#6250d6",
 };
 const SVG = "http://www.w3.org/2000/svg";
 const LABELS_MIN = 480; // px; a narrower chart has no line names (the user, Nov 3: "in mobile no labels")
@@ -55,6 +55,15 @@ function speed(w, g) {
   if (one) return runSpeed(one, w, g);
   const have = runs.filter((r) => r.workloads[w]?.[g]);
   return Math.exp(have.reduce((sum, r) => sum + Math.log(runSpeed(r, w, g)), 0) / have.length);
+}
+// The generators every run in the picked source has numbers for (runs from before a generator was
+// added lack it). The mean leaves out a generator some runs lack, rather than averaging it over
+// fewer runs: the runs differ by up to 3x in speed (an iPhone against a laptop), so such a mean
+// would compare it with the others unfairly.
+function shown() {
+  const runs = allRuns();
+  const one = runs.find((r) => r.id === sourceSelect.value);
+  return GENERATORS.filter((g) => (one ? [one] : runs).every((r) => workloads.every((w) => r.workloads[w]?.[g.id])));
 }
 const chart = document.getElementById("all");
 let pinned = null;
@@ -91,7 +100,8 @@ function drawLines() {
   chart.append(svg);
   el("title", {}, svg).textContent = "Steps per second of each generator on each workload";
 
-  const all = workloads.flatMap((w) => GENERATORS.map((g) => speed(w, g.id)));
+  const gs = shown();
+  const all = workloads.flatMap((w) => gs.map((g) => speed(w, g.id)));
   const lo = Math.min(...all) / 1.1;
   const hi = Math.max(...all) * 1.1;
   const bottom = HEIGHT - M.bottom;
@@ -115,11 +125,11 @@ function drawLines() {
 
   const focus = pinned ?? hovered;
   chart.classList.toggle("focused", focus !== null);
-  const last = spread(GENERATORS.map((g) => Y(speed(workloads.at(-1), g.id))), M.top, bottom);
+  const last = spread(gs.map((g) => Y(speed(workloads.at(-1), g.id))), M.top, bottom);
   // The picked generator is drawn last, on top.
-  const order = [...GENERATORS.keys()].sort((a, b) => (GENERATORS[a].id === focus) - (GENERATORS[b].id === focus));
+  const order = [...gs.keys()].sort((a, b) => (gs[a].id === focus) - (gs[b].id === focus));
   for (const k of order) {
-    const gen = GENERATORS[k];
+    const gen = gs[k];
     const color = COLORS[gen.id];
     const on = gen.id === focus;
     const g = el("g", { class: `g${on ? " on" : ""}` }, svg);
@@ -152,18 +162,19 @@ function drawOne(w) {
   const width = chart.clientWidth || 700;
   const left = 132;
   const right = 56;
-  const height = PAD + BAR_ROW * GENERATORS.length + 26;
+  const gs = shown();
+  const height = PAD + BAR_ROW * gs.length + 26;
   const svg = el("svg", { width, height, viewBox: `0 0 ${width} ${height}`, role: "img" });
   chart.append(svg);
   el("title", {}, svg).textContent = `Steps per second of each generator on ${WORKLOAD_NAMES[w]}`;
   const defs = el("defs", {}, svg);
-  const sorted = [...GENERATORS].sort((a, b) => speed(w, b.id) - speed(w, a.id));
+  const sorted = [...gs].sort((a, b) => speed(w, b.id) - speed(w, a.id));
   const max = speed(w, sorted[0].id);
   const ticks = [1, 2, 5].flatMap((m) => [0, 1, 2, 3, 4].map((p) => m * 10 ** p)).sort((a, b) => a - b);
   const step = ticks.find((t) => max / t <= 5);
   const top = Math.ceil(max / step) * step;
   const X = (v) => left + (v / top) * (width - left - right);
-  const bottom = PAD + BAR_ROW * GENERATORS.length;
+  const bottom = PAD + BAR_ROW * gs.length;
   for (let t = 0; t <= top; t += step) {
     el("line", { class: "grid", x1: X(t), x2: X(t), y1: PAD, y2: bottom }, svg);
     el("text", { class: "tick", x: X(t), y: bottom + 15, "text-anchor": "middle" }, svg).textContent = compact.format(t);
@@ -211,11 +222,11 @@ function setPinned(g) { pinned = g; draw(); }
 // A button per generator, with its line's color and dash, fastest overall first (geometric mean
 // of its speed relative to the fastest on each workload).
 const gens = document.getElementById("gens");
-const best = (w) => Math.max(...GENERATORS.map((g) => speed(w, g.id)));
+const best = (w) => Math.max(...shown().map((g) => speed(w, g.id)));
 const geomean = (g) => Math.exp(workloads.reduce((s, w) => s + Math.log(speed(w, g) / best(w)), 0) / workloads.length);
 function drawButtons() {
 gens.replaceChildren();
-for (const gen of [...GENERATORS].sort((a, b) => geomean(b.id) - geomean(a.id))) {
+for (const gen of [...shown()].sort((a, b) => geomean(b.id) - geomean(a.id))) {
   const b = document.createElement("button");
   b.type = "button";
   b.dataset.gen = gen.id;
@@ -244,7 +255,7 @@ for (const w of [null, ...workloads]) {
 // The numbers, as a table.
 const drawTable = () => document.getElementById("table").innerHTML =
   `<tr><th>steps/s</th>${workloads.map((w) => `<th>${WORKLOAD_NAMES[w]}</th>`).join("")}</tr>` +
-  GENERATORS.map((g) => `<tr><td>${g.name}</td>${workloads.map((w) => `<td>${compact.format(speed(w, g.id))}</td>`).join("")}</tr>`).join("");
+  shown().map((g) => `<tr><td>${g.name}</td>${workloads.map((w) => `<td>${compact.format(speed(w, g.id))}</td>`).join("")}</tr>`).join("");
 
 // The runs to pick from: the mean, then each run, this browser's last.
 function fillSources(pick) {

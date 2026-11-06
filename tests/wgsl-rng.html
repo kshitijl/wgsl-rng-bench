@@ -78,7 +78,7 @@
     }
     // The written-out versions agree with the loop.
     for (const [i, [, ctr, key]] of THREEFRY_KAT.entries()) {
-      for (const n of [12, 20]) {
+      for (const n of [10, 12, 20]) {
         const got = await runOne(device, ["threefry"], `
           let a = threefry4x32_${n}(vec4u(${u(ctr)}), vec4u(${u(key)}));
           let b = threefry4x32(vec4u(${u(ctr)}), vec4u(${u(key)}), ${n}u);
@@ -137,6 +137,7 @@
     philox: ["e3e80670 e50a0ebc 95f222c0 b615aa27", "a90815b9 a5c75ada 1ec8eade 2b83ab56"],
     threefry20: ["b8ed4609 11293615 20738f4f f7a0783a", "dd504eb0 1fe2470c 3d32a6fb 8ea94d8c"],
     threefry12: ["0b292389 a5269211 c4142e7b 30fcd3be", "ac94a4a5 fe787cd1 c38ad3e3 c582c830"],
+    threefry10: ["b0c6d5fd ae81e915 186129bf 4948f9f9", "8d5c9e3c f25ef597 57729349 cb0ed301"],
     pcg4d: ["2eda6c9d 681d2eed 306c117d b0607dce", "f33a717a a96bb0ac 10337b41 cb47d712"],
     xxhash32: ["dee6a671 9d5e993f d7a2b31c b1554b73", "150e2658 fd1ec004 6679e147 63075310"],
     tea: ["dfdf8fb5 2d161390 7aa707fa 988a1ce2", "b9490185 166d29be 0ec300bc 40e0abd8"],

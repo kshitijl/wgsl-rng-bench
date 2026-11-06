@@ -3,7 +3,7 @@
 // rounds, and the rotation constants R_32x4 from that header. Checked against Random123's
 // kat_vectors for 13 and 20 rounds (tests/wgsl-rng.html).
 //
-// threefry4x32 is the loop, as the reference; the generators use threefry4x32_12 and _20, the same
+// threefry4x32 is the loop, as the reference; the generators use threefry4x32_10, _12 and _20, the same
 // rounds written out with constant rotations and key indices (the tests check they agree with the
 // loop). With the loop the rotations are looked up at run time, and on the pi kernel (M1 Pro,
 // headless Chrome, one run each) Threefry-12 made 2.2K steps/s; written out, 13.4K.
@@ -38,6 +38,24 @@ fn threefry4x32(ctr: vec4u, key: vec4u, rounds: u32) -> vec4u {
 
 // Written out by a script from threefry4x32 above: round r rotates by TF_ROT0[r % 8] and
 // TF_ROT1[r % 8], and every fourth round injects key schedule word s = (r + 1) / 4.
+fn threefry4x32_10(ctr: vec4u, key: vec4u) -> vec4u {
+  let ks = array<u32, 5>(key.x, key.y, key.z, key.w, SKEIN_KS_PARITY32 ^ key.x ^ key.y ^ key.z ^ key.w);
+  var x = ctr + key;
+  x.x += x.y; x.y = rotl32(x.y, 10u) ^ x.x; x.z += x.w; x.w = rotl32(x.w, 26u) ^ x.z;
+  x.x += x.w; x.w = rotl32(x.w, 11u) ^ x.x; x.z += x.y; x.y = rotl32(x.y, 21u) ^ x.z;
+  x.x += x.y; x.y = rotl32(x.y, 13u) ^ x.x; x.z += x.w; x.w = rotl32(x.w, 27u) ^ x.z;
+  x.x += x.w; x.w = rotl32(x.w, 23u) ^ x.x; x.z += x.y; x.y = rotl32(x.y, 5u) ^ x.z;
+  x += vec4u(ks[1], ks[2], ks[3], ks[4]); x.w += 1u;
+  x.x += x.y; x.y = rotl32(x.y, 6u) ^ x.x; x.z += x.w; x.w = rotl32(x.w, 20u) ^ x.z;
+  x.x += x.w; x.w = rotl32(x.w, 17u) ^ x.x; x.z += x.y; x.y = rotl32(x.y, 11u) ^ x.z;
+  x.x += x.y; x.y = rotl32(x.y, 25u) ^ x.x; x.z += x.w; x.w = rotl32(x.w, 10u) ^ x.z;
+  x.x += x.w; x.w = rotl32(x.w, 18u) ^ x.x; x.z += x.y; x.y = rotl32(x.y, 20u) ^ x.z;
+  x += vec4u(ks[2], ks[3], ks[4], ks[0]); x.w += 2u;
+  x.x += x.y; x.y = rotl32(x.y, 10u) ^ x.x; x.z += x.w; x.w = rotl32(x.w, 26u) ^ x.z;
+  x.x += x.w; x.w = rotl32(x.w, 11u) ^ x.x; x.z += x.y; x.y = rotl32(x.y, 21u) ^ x.z;
+  return x;
+}
+
 fn threefry4x32_12(ctr: vec4u, key: vec4u) -> vec4u {
   let ks = array<u32, 5>(key.x, key.y, key.z, key.w, SKEIN_KS_PARITY32 ^ key.x ^ key.y ^ key.z ^ key.w);
   var x = ctr + key;

@@ -130,8 +130,7 @@ PractRand builds of Nov 3 were gone (they were in a session's scratch folder), a
 downloaded code was blocked for the agent, so the user ran a script that rebuilt both (TestU01
 from its authors' GitHub, `umontreal-simul/TestU01-2009`, as their site refused the download),
 rebuilt `crush` and started Threefry-10's BigCrush and PractRand runs, Nov 6 about 13:04, under
-`caffeinate`. At 13:11: PractRand clean to 32 GB, BigCrush 6 tests in, all normal. The WGSL benchmark doesn't have it: `results.json` has no
-speeds for it, so the summary chart would break if it were added to `generators.js`.
+`caffeinate`. At 13:11: PractRand clean to 32 GB, BigCrush 6 tests in, all normal.
 
 Both finished Nov 6, PractRand at 14:54 and BigCrush at 15:13. Threefry-10 passes both:
 PractRand has no failures and no "unusual" lines to 1 TB (6623 s), and BigCrush passes all 160
@@ -139,6 +138,24 @@ statistics ("All tests were passed"; smallest p-value 4.1e-3). Its BigCrush took
 not the 9 hours estimated from the Nov 4 runs, which were sharing the CPU. So 10 rounds already
 pass both batteries in the benchmark's layout; 12 has at least two rounds of margin by these
 tests.
+
+The user then asked (Nov 6) to add it to the GPU benchmark, to see whether it's fast enough to
+recommend over pcg4d. It is in `generators.js` as `threefry10` (`threefry4x32_10` in
+`threefry.wgsl`; `tests/wgsl-rng.html` checks it against the loop and against this C port: PASS).
+Two runs in headless Chrome 156 on the M1 Pro, Nov 6 about 16:55, machine otherwise idle; the
+two agree within 1% on every workload, and the other generators are within 1-4% of the Nov 3
+Chrome runs. Steps per second:
+
+| | pi | ink | trace | Ising | dropout | Gauss | raw |
+|---|---|---|---|---|---|---|---|
+| pcg4d | 20.9K | 13.7K | 2194 | 2823 | 7501 | 12.2K | 12.3K |
+| Threefry-10 | 14.6K | 11.0K | 1978 | 2821 | 7416 | 10.0K | 12.3K |
+| Threefry-12 | 13.3K | 10.0K | 1902 | 2822 | 7435 | 9.4K | 12.1K |
+
+Threefry-10 is 4% faster than Threefry-12 (geometric mean over workloads; up to 10% on pi) and
+12% slower than pcg4d (30% on pi, 20% on ink, 18% on Gauss). Ising, dropout and raw run at the
+same speed with every counter-based generator, so the RNG isn't what limits them. So two fewer
+rounds close only about a quarter of the gap to pcg4d.
 
 ## To do (Nov 6)
 
