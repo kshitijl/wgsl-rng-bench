@@ -143,8 +143,10 @@ pass both batteries in the benchmark's layout; 12 has at least two rounds of mar
 tests.
 
 The user then asked (Nov 6) to add it to the GPU benchmark, to see whether it's fast enough to
-recommend over pcg4d. It is in `generators.js` as `threefry10` (`threefry4x32_10` in
-`threefry.wgsl`; `tests/wgsl-rng.html` checks it against the loop and against this C port: PASS).
+recommend over pcg4d. It was added to `generators.js` as `threefry10` (`threefry4x32_10` in
+`threefry.wgsl`; `tests/wgsl-rng.html` checked it against the loop and against this C port: PASS),
+and taken out again the same day (the user: the post doesn't feature it); see
+`../notes/threefry-rounds.md`.
 Two runs in headless Chrome 156 on the M1 Pro, Nov 6 about 16:55, machine otherwise idle; the
 two agree within 1% on every workload, and the other generators are within 1-4% of the Nov 3
 Chrome runs. Steps per second:

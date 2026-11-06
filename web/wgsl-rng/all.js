@@ -1,8 +1,8 @@
 // Every generator on every workload, from results.json: a column per workload, steps per second
 // up the side on a log scale (higher is faster), and a line per generator, named at its right end
 // (on a chart under LABELS_MIN wide, not named: the buttons below say which line is which).
-// Each generator has its own color; stateful ones are dashed, counter-based solid (ten
-// generators, eight colors: two colors are used twice, each once solid and once dashed). Hovering a line
+// Each generator has its own color; stateful ones are dashed, counter-based solid (nine
+// generators, eight colors: one color is used twice, once solid and once dashed). Hovering a line
 // or a generator's button picks it out, with its numbers; clicking keeps it picked. Picking a
 // workload (its button, or its name under the chart) shows just that one, as bars ranked
 // fastest first; stateful bars are striped.
@@ -25,7 +25,7 @@ const SHORT_NAMES = { pi: "pi", ink: "ink", trace: "trace", ising: "Ising", drop
 // The reference categorical palette (dataviz skill), in its order, fastest overall first.
 const COLORS = {
   pcg4d: "#2a78d6", threefry12: "#eb6834", xxhash32: "#1baf7a", threefry20: "#eda100", tea: "#e87ba4",
-  philox: "#008300", xoshiro: "#6250d6", pcg32: "#e34948", xorwow: "#eb6834", threefry10: "#6250d6",
+  philox: "#008300", xoshiro: "#6250d6", pcg32: "#e34948", xorwow: "#eb6834",
 };
 const SVG = "http://www.w3.org/2000/svg";
 const LABELS_MIN = 480; // px; a narrower chart has no line names (the user, Nov 3: "in mobile no labels")

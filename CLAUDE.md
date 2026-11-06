@@ -1,6 +1,6 @@
 # WGSL RNG benchmark
 
-The user's project (started Nov 3, 2026): ten GPU random number generators written in WGSL,
+The user's project (started Nov 3, 2026): nine GPU random number generators written in WGSL,
 benchmarked on seven workloads in the browser, and tested for statistical quality with BigCrush
 and PractRand. Split out of the klauria.tech repo (`~/local-src/39-klauria-tech`) the same day
 (the user: "this whole benchmarking project, along with the statistical testing, as well as the
@@ -24,7 +24,7 @@ Commit after every change.
   them here. They're here so this repo runs on its own.
 - `tests/wgsl-rng.html`: serve the repo root (`python3 -m http.server`) and open
   `/tests/wgsl-rng.html` in a browser with WebGPU; PASS or FAIL in the title.
-- `quality/`: C ports of all ten generators (`rngs.h`, plus Threefry with 4-6 rounds), BigCrush
+- `quality/`: C ports of all nine generators (`rngs.h`, plus Threefry with 10, 6, 5 and 4 rounds), BigCrush
   (`crush.c`, TestU01) and PractRand (`stream.c` piped into `RNG_test stdin32`), and their output
   in `quality/results/`. `quality/build-testers.sh` builds TestU01 and PractRand into
   `quality/testers/` (git-ignored) and then `crush` and `stream`; `run-all.sh` uses them.
@@ -33,10 +33,8 @@ Commit after every change.
 
 ## The generators and workloads
 
-Ten generators (`generators.js`), the user's list (Nov 3: Philox, both Threefrys, XORWOW, "the
-lcg hash" and two more of each family), plus Threefry-10 (Nov 6, the user: to see whether it
-could be recommended over pcg4d for speed; `quality/README.md`). Counter-based: Philox4x32-10,
-Threefry4x32-20, -12 and -10,
+Nine generators (`generators.js`), the user's list (Nov 3: Philox, both Threefrys, XORWOW, "the
+lcg hash" and two more of each family). Counter-based: Philox4x32-10, Threefry4x32-20 and -12,
 pcg4d (the JCGT 2020 hash, taken as "the lcg hash"), xxhash32 and TEA with 6 cycles (both from
 the JCGT supplement); stateful: XORWOW, xoshiro128** and PCG32 (64-bit arithmetic emulated on
 `vec2u`). Every generator defines `rng_begin`, `rand4u(call)` and `rng_end` (`common.wgsl` has the
@@ -51,14 +49,14 @@ Seven workloads (`workloads.js`), one page each, `bench.html?w=<workload>`: pi, 
 tracer reuse the post's kernels and views (`../gpu-rng/pi.js` and `ink.js` export `piDemo` and
 `inkDemo`); ising (2D Ising at the critical temperature, checkerboard Metropolis), dropout,
 gauss (Box-Muller, histogram against the exact density) and raw (random words). Threefry is
-written out round by round (`threefry4x32_10`, `_12`, `_20`): as a loop with run-time rotation lookups,
+written out round by round (`threefry4x32_12`, `_20`): as a loop with run-time rotation lookups,
 Threefry-12 made 2.2K pi steps/s, written out 13.4K.
 
 ## The pages
 
 Every bench page, like the post's demos, has two buttons (the user, Nov 3): "start" runs the
 picture at once, at the benchmark's speed or a rough one from a short block timed on a copy;
-"benchmark RNGs" benchmarks all ten (`benchmark.js`: rounds of alternating blocks through
+"benchmark RNGs" benchmarks all nine (`benchmark.js`: rounds of alternating blocks through
 `measure` in `../gpu-rng/sim.js`, on sims sharing one set of workload buffers), then runs the
 picture afresh. Either way it runs 30 s on screen. The picker is labelled "RNG" (the user's).
 Starting one page stops the others (a BroadcastChannel), so they don't share the GPU. The Ising
@@ -67,10 +65,10 @@ picture gets twice the GPU time per frame (`sliceMs`; the user: "more steps per 
 `all.html` charts every generator on every workload from `results.json`: a column per workload,
 steps per second up the side on a log scale (the user: "higher = faster", plain steps per
 second), a line per generator in its own color (stateful dashed; eight palette colors, so orange
-is used twice, once solid and once dashed, and purple too: Threefry-10 solid, xoshiro128** dashed), named at the right end (the user, Nov 3: "not on both sides"; under 480 px wide,
+is used twice, once solid and once dashed), named at the right end (the user, Nov 3: "not on both sides"; under 480 px wide,
 as in a phone's frame, not named at all, the buttons below being the legend); hover or click a generator to
-pick it out (only generators every run in the picked source has: the Nov 3 runs have no
-Threefry-10, and averaging it over fewer, faster runs would flatter it); a row of workload buttons (or a column's name) shows one workload as ranked bars,
+pick it out (only generators every run in the picked source has, so a generator added later isn't
+averaged over fewer runs than the rest: the runs differ up to 3x in speed); a row of workload buttons (or a column's name) shows one workload as ranked bars,
 stateful bars striped (the user: to "see relative ordering for trace or ising"); a table view.
 
 `results.json` is a list of runs, each with every round's ms per step by workload and generator,
@@ -96,9 +94,12 @@ Threefry-12 its ranking matches the Mac's (run 1, geometric mean over workloads:
 
 ## Statistical quality
 
+`notes/threefry-rounds.md`: the Nov 6 work on Threefry's round count (is there a Threefry as fast
+as pcg4d that passes? No), with what was tried, found, and left, to pick up from.
+
 `quality/`: each generator's stream is laid out as the benchmark uses it: frame after frame,
 every thread's four words (2^20 threads), thread 0 first, seed 1. The C ports match the GPU bit
-for bit (checked Nov 3: all nine, and Threefry-10 Nov 6; frames 0 and 1, threads 0-3 and the last, through the raw
+for bit (checked Nov 3: all nine; frames 0 and 1, threads 0-3 and the last, through the raw
 kernel). Why C (the user asked): TestU01 and PractRand pull numbers on the CPU, BigCrush needs
 about 2^38 and PractRand up to 1 TB, and the ports compute exactly what the shaders do.
 

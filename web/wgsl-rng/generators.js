@@ -5,7 +5,6 @@ export const GENERATORS = [
   { id: "philox", name: "Philox4x32-10", family: "counter", files: ["gen-philox"], stateBytes: 0 },
   { id: "threefry20", name: "Threefry4x32-20", family: "counter", files: ["threefry", "gen-threefry20"], stateBytes: 0 },
   { id: "threefry12", name: "Threefry4x32-12", family: "counter", files: ["threefry", "gen-threefry12"], stateBytes: 0 },
-  { id: "threefry10", name: "Threefry4x32-10", family: "counter", files: ["threefry", "gen-threefry10"], stateBytes: 0 },
   { id: "pcg4d", name: "pcg4d", family: "counter", files: ["hashes", "gen-pcg4d"], stateBytes: 0 },
   { id: "xxhash32", name: "xxhash32", family: "counter", files: ["hashes", "gen-xxhash32"], stateBytes: 0 },
   { id: "tea", name: "TEA, 6 cycles", family: "counter", files: ["hashes", "gen-tea"], stateBytes: 0 },
