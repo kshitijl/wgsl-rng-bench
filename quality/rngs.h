@@ -110,8 +110,10 @@ static inline Pcg32 pcg32_seeded(u64 initstate, u64 initseq) {
   return r;
 }
 
-enum { PHILOX, THREEFRY20, THREEFRY12, THREEFRY10, PCG4D, XXHASH32, TEA, XORWOW, XOSHIRO, PCG32, NGEN };
-static const char *GEN_IDS[NGEN] = {"philox", "threefry20", "threefry12", "threefry10", "pcg4d", "xxhash32", "tea", "xorwow", "xoshiro", "pcg32"};
+// threefry6, 5 and 4 aren't in the GPU benchmark: Threefry with that few rounds matches pcg4d's
+// speed there (README.md), so their tests say whether such a Threefry would be worth adding.
+enum { PHILOX, THREEFRY20, THREEFRY12, THREEFRY10, THREEFRY6, THREEFRY5, THREEFRY4, PCG4D, XXHASH32, TEA, XORWOW, XOSHIRO, PCG32, NGEN };
+static const char *GEN_IDS[NGEN] = {"philox", "threefry20", "threefry12", "threefry10", "threefry6", "threefry5", "threefry4", "pcg4d", "xxhash32", "tea", "xorwow", "xoshiro", "pcg32"};
 
 typedef struct {
   int gen;
@@ -140,9 +142,10 @@ static inline void rand4u(Stream *s, u32 t, u32 out[4]) {
   u32 n = s->frame;
   switch (s->gen) {
     case PHILOX: { u32 c[4] = {n, 0, t, 0}, k[2] = {SEED, 0}; philox(c, k, out); break; }
-    case THREEFRY20: case THREEFRY12: case THREEFRY10: {
+    case THREEFRY20: case THREEFRY12: case THREEFRY10: case THREEFRY6: case THREEFRY5: case THREEFRY4: {
+      static const int rounds[NGEN] = {[THREEFRY20] = 20, [THREEFRY12] = 12, [THREEFRY10] = 10, [THREEFRY6] = 6, [THREEFRY5] = 5, [THREEFRY4] = 4};
       u32 c[4] = {n, 0, t, 0}, k[4] = {SEED, 0, 0, 0};
-      threefry(c, k, s->gen == THREEFRY20 ? 20 : s->gen == THREEFRY12 ? 12 : 10, out);
+      threefry(c, k, rounds[s->gen], out);
       break;
     }
     case PCG4D: { u32 in[4] = {t, n, SEED, 0}; pcg4d(in, out); break; }

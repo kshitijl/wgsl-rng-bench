@@ -1,6 +1,9 @@
 # Statistical tests of the generators
 
-Build (macOS, Nov 3, 2026):
+Build: `./build-testers.sh`. It downloads TestU01 (a pinned commit of its authors' GitHub repo)
+and PractRand pre0.95 (checked by SHA-256), builds both into `testers/` (git-ignored, so it lasts,
+unlike the scratch folders the Nov 3 and Nov 6 builds were in), then builds `crush` and `stream`.
+About 30 s on the M1 Pro (Nov 6). What it runs, as first done by hand (macOS, Nov 3, 2026):
 
 - TestU01 1.2.3 from http://simul.iro.umontreal.ca/testu01/TestU01.zip:
   `./configure --prefix=$PWD/../install --build=x86_64-apple-darwin --host=x86_64-apple-darwin CFLAGS="-O2 -w -std=gnu89" && make -j8 && make install`
@@ -10,8 +13,8 @@ Build (macOS, Nov 3, 2026):
 - Here: `cc -O3 -march=native -o stream stream.c` and
   `cc -O3 -march=native -w -I$TU/include crush.c -o crush $TU/lib/libtestu01.a $TU/lib/libprobdist.a $TU/lib/libmylib.a -lm`.
 
-Run: `RNG_TEST=/path/to/RNG_test ./run-all.sh` (BigCrush and PractRand to 1 TB on every generator, in
-parallel, at low priority). One stream by hand: `./stream GEN | RNG_test stdin32 -tlmax 1TB`;
+Run: `./run-all.sh` (BigCrush and PractRand to 1 TB on every generator, in
+parallel, at low priority). One stream by hand: `./stream GEN | testers/RNG_test stdin32 -tlmax 1TB`;
 `./stream GEN 1` is one thread's own sequence; `./stream GEN 1048576 --dump` prints words to
 compare with the GPU.
 
@@ -173,17 +176,21 @@ The two runs differed by up to 6% in a cell this time (more generators per run).
 draws level with pcg4d at about 5 rounds and is slower with 6 or more. Below 4 rounds the numbers
 mean little: Ising and Gauss slow down by up to half, likely because output that poor changes the
 workloads themselves (atomics on the Gauss histogram colliding, for one).
-Whether 4-6 rounds pass anything is untested: the TestU01 and PractRand builds were gone again.
 
-## To do (Nov 6)
+They don't. `rngs.h` has `threefry6`, `threefry5` and `threefry4` (not in the GPU benchmark), and
+PractRand in the benchmark's layout fails all three at its first report, 512 MB (about 3 s), with
+78, 106 and 139 FAIL lines and p down to 5e-8505 (6 rounds) and 0 (5 and 4): `results/practrand-threefry{4,5,6}.txt`,
+stopped there. So no Threefry that's as fast as pcg4d is clean, and Threefry-12 stays the
+recommendation (the user's rule above).
 
-- Write
-  `tools/build-testers.sh` (the user, Nov 6: "write the build script after the runs finish"):
-  download TestU01 at a fixed commit of `umontreal-simul/TestU01-2009` and PractRand pre0.95 from
-  SourceForge, check each against a recorded SHA-256, build both into a git-ignored folder in this
-  repo (the commands at the top of this file), then build `crush` and `stream`. So the testers no
-  longer live in a scratch folder that gets cleared. Chosen over publishing cleaned-up forks of
-  both (the user asked, Nov 6): TestU01's repo takes pull requests and says a 64-bit version may
-  come in late 2026, and unmaintained forks of both already exist. Build fixes (Apple Silicon in
-  `config.sub`, the macOS `rm: conftest.dSYM` / `mkdir: .libs` noise) can go upstream as a PR.
-  Check PractRand's license before redistributing anything of it.
+## The build script (Nov 6)
+
+`build-testers.sh` (the user: "i just want it to be easy to run these tests again and not have
+issues we had earlier"). It pins TestU01 by git commit rather than by a SHA-256 of GitHub's
+generated tarball, which GitHub doesn't promise to keep byte for byte. It's in `quality/`, next to
+`run-all.sh`, not in `tools/` as first planned. It replaces `crush` and `stream` by renaming new builds
+over them, so a run using the old binary isn't disturbed (on Nov 3 the rebuilt binaries had to go
+in a scratch folder for that reason). Chosen over publishing cleaned-up forks of both testers (the user asked, Nov 6):
+TestU01's repo takes pull requests and says a 64-bit version may come in late 2026, and
+unmaintained forks of both already exist. The Apple Silicon `config.sub` workaround could go
+upstream as a PR. Nothing of PractRand is redistributed: the script downloads it.

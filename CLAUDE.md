@@ -24,8 +24,10 @@ Commit after every change.
   them here. They're here so this repo runs on its own.
 - `tests/wgsl-rng.html`: serve the repo root (`python3 -m http.server`) and open
   `/tests/wgsl-rng.html` in a browser with WebGPU; PASS or FAIL in the title.
-- `quality/`: C ports of all ten generators (`rngs.h`), BigCrush (`crush.c`, TestU01) and
-  PractRand (`stream.c` piped into `RNG_test stdin32`), and their output in `quality/results/`.
+- `quality/`: C ports of all ten generators (`rngs.h`, plus Threefry with 4-6 rounds), BigCrush
+  (`crush.c`, TestU01) and PractRand (`stream.c` piped into `RNG_test stdin32`), and their output
+  in `quality/results/`. `quality/build-testers.sh` builds TestU01 and PractRand into
+  `quality/testers/` (git-ignored) and then `crush` and `stream`; `run-all.sh` uses them.
 - `tools/collect.py`: serves `web/` (or the site's `public/`) and saves every run that
   `all.html?autorun=1` POSTs, for recording runs from several browsers on one machine.
 
