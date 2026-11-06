@@ -133,11 +133,16 @@ rebuilt `crush` and started Threefry-10's BigCrush and PractRand runs, Nov 6 abo
 `caffeinate`. At 13:11: PractRand clean to 32 GB, BigCrush 6 tests in, all normal. The WGSL benchmark doesn't have it: `results.json` has no
 speeds for it, so the summary chart would break if it were added to `generators.js`.
 
+Both finished Nov 6, PractRand at 14:54 and BigCrush at 15:13. Threefry-10 passes both:
+PractRand has no failures and no "unusual" lines to 1 TB (6623 s), and BigCrush passes all 160
+statistics ("All tests were passed"; smallest p-value 4.1e-3). Its BigCrush took 2:08:50 CPU,
+not the 9 hours estimated from the Nov 4 runs, which were sharing the CPU. So 10 rounds already
+pass both batteries in the benchmark's layout; 12 has at least two rounds of margin by these
+tests.
+
 ## To do (Nov 6)
 
-- When the Threefry-10 runs finish (`./status.sh`; BigCrush about 9 hours if it passes, so about
-  22:00 Nov 6), write their results up here and commit the logs.
-- Then, not before (it rebuilds `crush`, which the BigCrush run is using), write
+- Write
   `tools/build-testers.sh` (the user, Nov 6: "write the build script after the runs finish"):
   download TestU01 at a fixed commit of `umontreal-simul/TestU01-2009` and PractRand pre0.95 from
   SourceForge, check each against a recorded SHA-256, build both into a git-ignored folder in this
