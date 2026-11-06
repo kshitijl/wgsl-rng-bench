@@ -157,6 +157,24 @@ Threefry-10 is 4% faster than Threefry-12 (geometric mean over workloads; up to 
 same speed with every counter-based generator, so the RNG isn't what limits them. So two fewer
 rounds close only about a quarter of the gap to pcg4d.
 
+Then the user asked (Nov 6) whether any number of rounds makes Threefry faster than pcg4d ("if
+there's none, i'm happy to recommend threefry-12. but if there is one, it's worth running the
+tests"). The agent generated Threefry written out with 1 to 12 rounds (the same script reproduces
+`threefry4x32_10` and `_12` exactly), in a scratch copy of `web/`, and ran two benchmark runs
+(headless Chrome 156, M1 Pro, about 17:15) of those and pcg4d. Speed relative to pcg4d (above 1 is
+faster), geometric mean over workloads, then pi alone:
+
+| rounds | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| mean | 1.01 | 1.03 | 1.00 | 0.97 | 0.94 | 0.92 | 0.90 | 0.88 | 0.86 | 0.84 |
+| pi | 1.03 | 1.02 | 0.97 | 0.91 | 0.84 | 0.80 | 0.74 | 0.70 | 0.66 | 0.63 |
+
+The two runs differed by up to 6% in a cell this time (more generators per run). So Threefry
+draws level with pcg4d at about 5 rounds and is slower with 6 or more. Below 4 rounds the numbers
+mean little: Ising and Gauss slow down by up to half, likely because output that poor changes the
+workloads themselves (atomics on the Gauss histogram colliding, for one).
+Whether 4-6 rounds pass anything is untested: the TestU01 and PractRand builds were gone again.
+
 ## To do (Nov 6)
 
 - Write
