@@ -125,7 +125,25 @@ it and run its tests. Threefry-12 is the fewest rounds the GPU benchmark uses. T
 same function with two rounds fewer, so it should show whether 12 rounds leave much margin.
 `rngs.h` and `run-all.sh` have it as `threefry10`, laid out like Threefry-12: counter (frame, 0,
 thread, 0), key (seed, 0, 0, 0). `stream` is rebuilt with it, and Threefry-12's first words are
-unchanged (`0b292389 a5269211 c4142e7b 30fcd3be`, as in `tests/wgsl-rng.html`). `crush` isn't
-rebuilt yet: two runs were using it, and the TestU01 and PractRand builds of Nov 3 are gone (they
-were in a session's scratch folder). The WGSL benchmark doesn't have it: `results.json` has no
+unchanged (`0b292389 a5269211 c4142e7b 30fcd3be`, as in `tests/wgsl-rng.html`). The TestU01 and
+PractRand builds of Nov 3 were gone (they were in a session's scratch folder), and building
+downloaded code was blocked for the agent, so the user ran a script that rebuilt both (TestU01
+from its authors' GitHub, `umontreal-simul/TestU01-2009`, as their site refused the download),
+rebuilt `crush` and started Threefry-10's BigCrush and PractRand runs, Nov 6 about 13:04, under
+`caffeinate`. At 13:11: PractRand clean to 32 GB, BigCrush 6 tests in, all normal. The WGSL benchmark doesn't have it: `results.json` has no
 speeds for it, so the summary chart would break if it were added to `generators.js`.
+
+## To do (Nov 6)
+
+- When the Threefry-10 runs finish (`./status.sh`; BigCrush about 9 hours if it passes, so about
+  22:00 Nov 6), write their results up here and commit the logs.
+- Then, not before (it rebuilds `crush`, which the BigCrush run is using), write
+  `tools/build-testers.sh` (the user, Nov 6: "write the build script after the runs finish"):
+  download TestU01 at a fixed commit of `umontreal-simul/TestU01-2009` and PractRand pre0.95 from
+  SourceForge, check each against a recorded SHA-256, build both into a git-ignored folder in this
+  repo (the commands at the top of this file), then build `crush` and `stream`. So the testers no
+  longer live in a scratch folder that gets cleared. Chosen over publishing cleaned-up forks of
+  both (the user asked, Nov 6): TestU01's repo takes pull requests and says a 64-bit version may
+  come in late 2026, and unmaintained forks of both already exist. Build fixes (Apple Silicon in
+  `config.sub`, the macOS `rm: conftest.dSYM` / `mkdir: .libs` noise) can go upstream as a PR.
+  Check PractRand's license before redistributing anything of it.
