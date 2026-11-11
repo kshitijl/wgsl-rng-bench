@@ -92,6 +92,16 @@ Threefry-12 its ranking matches the Mac's (run 1, geometric mean over workloads:
 0.84, xxhash32 1.11, Threefry-20 1.15, TEA-6 1.31, xoshiro 1.53, PCG32 1.70, Philox 1.71, XORWOW
 2.43); it is about 3x slower in absolute terms (Threefry-12 pi 0.225 vs 0.075 ms per step).
 
+The user's Linux machine (NVIDIA RTX 4060; the user's runs, Nov 11): two runs each in Firefox 160
+and Chrome 157. Chrome's two agree within a few percent and are the fastest runs here (Threefry-12
+pi 0.020 ms per step). Against Threefry-12 the counter-based ranking is about the Mac's, except
+xxhash32 is ahead of it (0.95); the stateful ones are much further behind (geometric mean over
+workloads, Chrome: pcg4d 0.83, xxhash32 0.95, Threefry-20 1.18, Philox 1.49, TEA-6 1.60, xoshiro
+2.9-3.1, PCG32 3.1, XORWOW 4.8). The Firefox runs are noisy: in some workloads (run 1: ink, trace,
+ising, gauss, raw; run 2: pi, ising) the time per step climbs round after round, up to 5x the
+other run's, which is steady and close to Chrome's (cause not looked into). They are in
+`results.json` and in the mean as recorded.
+
 ## Statistical quality
 
 `notes/threefry-rounds.md`: the Nov 6 work on Threefry's round count (is there a Threefry as fast
