@@ -71,6 +71,16 @@ pick it out (only generators every run in the picked source has, so a generator 
 averaged over fewer runs than the rest: the runs differ up to 3x in speed); a row of workload buttons (or a column's name) shows one workload as ranked bars,
 stateful bars striped (the user: to "see relative ordering for trace or ising"); a table view.
 
+"Compare" (the agent's label, like "machines and browsers": the user's to rename) picks what the
+columns are. The user, Nov 11: "the benchmark chart on top should have ways to slice and dice a
+bit right? to compare chrome vs firefox for example. or the rtx vs macbook pro?" With "machines
+and browsers" there is a column per setup (a run's `machine` and `browser` in `results.json`,
+usually two runs each, in the file's order), the same line per generator, at the geometric mean
+of its speed over the workloads, or on the one workload picked. Parallel lines mean the same
+ranking; crossing lines mean it changed. One column per setup rather than separate machine and
+browser pickers, so Safari isn't compared with Chrome across different machines. Clicking a
+setup's name shows it alone by workload; "results from" also lists each setup's mean.
+
 `results.json` is a list of runs, each with every round's ms per step by workload and generator,
 plus the environment (user agent, GPU adapter info, whether it had timestamps). "Results from"
 picks one run, or the geometric mean of all of them (the default; the user, Nov 3: "maybe by
